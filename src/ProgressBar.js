@@ -1,6 +1,11 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { View, Animated, Easing } from 'react-native';
+
+import {
+  View,
+  Animated,
+  Easing,
+} from 'react-native';
 
 class ProgressBar extends React.Component {
   constructor(props) {
@@ -17,8 +22,7 @@ class ProgressBar extends React.Component {
   }
 
   componentDidMount() {
-    const { progress } = this.state;
-    if (progress > 0) {
+    if (this.state.progress > 0) {
       this.animateWidth();
     }
   }
@@ -27,90 +31,69 @@ class ProgressBar extends React.Component {
     if (nextProps.value !== prevProps.progress) {
       if (nextProps.value >= 0 && nextProps.value <= nextProps.maxValue) {
         return nextProps;
+      } else {
+        return prevProps;
       }
+    } else {
       return prevProps;
     }
-    return prevProps;
   }
 
   componentDidUpdate(nextProps, prevProps) {
-    const {
-      value,
-      backgroundColorOnComplete,
-      maxValue,
-      onComplete,
-      barAnimationDuration
-    } = this.props;
-
-    if (value !== prevProps.progress) {
+    if (this.props.value !== prevProps.progress) {
       this.setState({
-        progress: value
+        progress: this.props.value
       }, () => {
         this.animateWidth();
       });
 
-      if (backgroundColorOnComplete) {
-        if (value === maxValue) {
+      if (this.props.backgroundColorOnComplete) {
+        if (this.props.value === this.props.maxValue) {
           this.animateBackground();
         }
       }
     }
 
-    if (prevProps.value === maxValue) {
+    if (prevProps.value === this.props.maxValue) {
       // Callback after complete the progress
-      const callback = onComplete;
+      const callback = this.props.onComplete;
       if (callback) {
-        setTimeout(callback, barAnimationDuration);
+        setTimeout(callback, this.props.barAnimationDuration);
       }
     }
   }
 
   animateWidth() {
-    const {
-      width,
-      progress,
-      borderWidth,
-      barEasing,
-      barAnimationDuration
-    } = this.props;
-
-    const toValue = ((width * progress) / 100) - borderWidth * 2;
+    const toValue = ((this.state.width * this.state.progress) / 100) - this.props.borderWidth * 2;
 
     Animated.timing(this.widthAnimation, {
-      easing: Easing[barEasing],
+      easing: Easing[this.props.barEasing],
       toValue: toValue > 0 ? toValue : 0,
-      duration: barAnimationDuration,
+      duration: this.props.barAnimationDuration,
     }).start();
   }
 
   animateBackground() {
-    const {
-      backgroundAnimationDuration
-    } = this.props;
-
     Animated.timing(this.backgroundAnimation, {
       toValue: 1,
-      duration: backgroundAnimationDuration,
+      duration: this.props.backgroundAnimationDuration,
     }).start();
   }
 
   onPageLayout = (event) => {
-    const { width } = event.nativeEvent.layout;
-    const { progress } = this.props;
-    this.setState({ width }, () => {
-      if (progress > 0) {
+    const { width, height } = event.nativeEvent.layout;
+    this.setState({ width, height }, () => {
+      if (this.state.progress > 0) {
         this.animateWidth();
       }
     });
   };
 
   render() {
-    const { backgroundColorOnComplete, backgroundColor } = this.props;
-
-    if (backgroundColorOnComplete) {
+    if (this.props.backgroundColorOnComplete) {
       this.backgroundInterpolationValue = this.backgroundAnimation.interpolate({
         inputRange: [0, 1],
-        outputRange: [backgroundColor, backgroundColorOnComplete],
+        outputRange: [this.props.backgroundColor, this.props.backgroundColorOnComplete],
       });
     }
 
